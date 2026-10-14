@@ -1,0 +1,407 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111827">
+  <title>Calculator | シンプル電卓</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: system-ui, -apple-system, "Segoe UI",
+        sans-serif;
+      background: #0b1020;
+      color: #f9fafb;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100svh;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      background:
+        radial-gradient(ellipse at top, #263451 0%, transparent 60%),
+        #0b1020;
+    }
+
+    .calculator {
+      width: min(100%, 370px);
+      padding: 22px;
+      border: 1px solid #334155;
+      border-radius: 28px;
+      background: rgba(17, 24, 39, 0.94);
+      box-shadow: 0 24px 70px #0006;
+    }
+
+    .heading {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 22px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 17px;
+      font-weight: 600;
+      letter-spacing: 1px;
+    }
+
+    .tag {
+      color: #94a3b8;
+      font-size: 11px;
+    }
+
+    .display {
+      min-height: 145px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: flex-end;
+      padding: 12px 4px 22px;
+      overflow: hidden;
+    }
+
+    #expression {
+      width: 100%;
+      min-height: 30px;
+      color: #94a3b8;
+      font-size: 18px;
+      text-align: right;
+      overflow-wrap: anywhere;
+    }
+
+    #result {
+      max-width: 100%;
+      color: #fff;
+      font-size: clamp(32px, 10vw, 46px);
+      font-weight: 300;
+      text-align: right;
+      overflow-wrap: anywhere;
+    }
+
+    .keys {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    button {
+      min-width: 0;
+      aspect-ratio: 1.12;
+      border: 0;
+      border-radius: 17px;
+      background: #273247;
+      color: #f8fafc;
+      font: inherit;
+      font-size: 23px;
+      cursor: pointer;
+      transition: filter .12s, transform .12s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    button:active {
+      transform: scale(.95);
+      filter: brightness(1.3);
+    }
+
+    button:focus-visible {
+      outline: 2px solid #93c5fd;
+      outline-offset: 2px;
+    }
+
+    .utility {
+      background: #3b465b;
+      color: #dbeafe;
+    }
+
+    .operator {
+      background: #365ca8;
+    }
+
+    .equals {
+      background: #60a5fa;
+      color: #0b1020;
+      font-weight: 700;
+    }
+
+    .zero {
+      grid-column: span 2;
+      aspect-ratio: auto;
+    }
+
+    footer {
+      margin-top: 18px;
+      color: #64748b;
+      font-size: 11px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <main class="calculator" aria-label="電卓">
+    <div class="heading">
+      <h1>CALCULATOR</h1>
+      <span class="tag">SIMPLE &amp; SMART</span>
+    </div>
+
+    <section class="display" aria-live="polite">
+      <div id="expression">計算を始めましょう</div>
+      <div id="result">0</div>
+    </section>
+
+    <div class="keys">
+      <button class="utility" data-action="clear" aria-label="全消去">AC</button>
+      <button class="utility" data-action="sign" aria-label="符号反転">±</button>
+      <button class="utility" data-action="percent" aria-label="パーセント">%</button>
+      <button class="operator" data-value="/" aria-label="割る">÷</button>
+
+      <button data-value="7">7</button>
+      <button data-value="8">8</button>
+      <button data-value="9">9</button>
+      <button class="operator" data-value="*" aria-label="掛ける">×</button>
+
+      <button data-value="4">4</button>
+      <button data-value="5">5</button>
+      <button data-value="6">6</button>
+      <button class="operator" data-value="-" aria-label="引く">−</button>
+
+      <button data-value="1">1</button>
+      <button data-value="2">2</button>
+      <button data-value="3">3</button>
+      <button class="operator" data-value="+" aria-label="足す">+</button>
+
+      <button class="utility" data-action="delete" aria-label="1文字削除">DEL</button>
+      <button class="zero" data-value="0">0</button>
+      <button data-value=".">.</button>
+      <button class="equals" data-action="equals" aria-label="計算">=</button>
+    </div>
+
+    <footer>Keyboard supported · Runs in your browser</footer>
+  </main>
+
+  <script>
+    (() => {
+      const expressionEl = document.getElementById("expression");
+      const resultEl = document.getElementById("result");
+
+      let expression = "";
+      let finished = false;
+
+      const pretty = s => s.replace(/\*/g, "×")
+        .replace(/\//g, "÷")
+        .replace(/-/g, "−");
+
+      function formatNumber(n) {
+        if (!Number.isFinite(n)) throw Error("計算できません");
+        if (Object.is(n, -0)) n = 0;
+        return Number(n.toPrecision(12)).toLocaleString("en-US", {
+          maximumFractionDigits: 10,
+          useGrouping: true
+        });
+      }
+
+      // 数値と演算子を解析し、演算子の優先順位に従って計算
+      function calculate(source) {
+        const tokens = source.match(
+          /(?:\d+\.?\d*|\.\d+)|[+\-*/%]/g
+        );
+        if (!tokens || tokens.join("") !== source) {
+          throw Error("入力を確認してください");
+        }
+
+        let pos = 0;
+
+        function primary() {
+          const token = tokens[pos];
+
+          if (token === "+" || token === "-") {
+            pos++;
+            const n = primary();
+            return token === "-" ? -n : n;
+          }
+
+          if (!token || !/^(?:\d+\.?\d*|\.\d+)$/.test(token)) {
+            throw Error("数値が必要です");
+          }
+
+          pos++;
+          let n = Number(token);
+
+          while (tokens[pos] === "%") {
+            n /= 100;
+            pos++;
+          }
+
+          return n;
+        }
+
+        function multiply() {
+          let n = primary();
+
+          while (tokens[pos] === "*" || tokens[pos] === "/") {
+            const op = tokens[pos++];
+            const right = primary();
+
+            if (op === "/" && right === 0) {
+              throw Error("0では割れません");
+            }
+
+            n = op === "*" ? n * right : n / right;
+          }
+
+          return n;
+        }
+
+        function add() {
+          let n = multiply();
+
+          while (tokens[pos] === "+" || tokens[pos] === "-") {
+            const op = tokens[pos++];
+            const right = multiply();
+            n = op === "+" ? n + right : n - right;
+          }
+
+          return n;
+        }
+
+        const answer = add();
+
+        if (pos !== tokens.length) {
+          throw Error("入力を確認してください");
+        }
+
+        return answer;
+      }
+
+      function update() {
+        expressionEl.textContent = expression
+          ? pretty(expression)
+          : "計算を始めましょう";
+
+        if (!expression) {
+          resultEl.textContent = "0";
+          return;
+        }
+
+        try {
+          resultEl.textContent = formatNumber(calculate(expression));
+        } catch {
+          resultEl.textContent = " ";
+        }
+      }
+
+      function inputValue(value) {
+        if (finished && /[0-9.]/.test(value)) {
+          expression = "";
+        }
+        finished = false;
+
+        if (/[0-9]/.test(value) && value.length === 1) {
+          const last = expression.split(/[+\-*/]/).pop();
+
+          if (last === "0" && value !== "0") {
+            expression = expression.slice(0, -1) + value;
+          } else if (last === "0" && value === "0") {
+            return;
+          } else {
+            expression += value;
+          }
+        } else if (value === ".") {
+          const last = expression.split(/[+\-*/]/).pop();
+          if (last.includes(".")) return;
+          expression += last === "" ? "0." : ".";
+        } else if (/[+\-*/]/.test(value)) {
+          if (!expression) {
+            if (value === "-") expression = "-";
+            else return;
+          } else if (/[+\-*/]$/.test(expression)) {
+            expression = expression.slice(0, -1) + value;
+          } else {
+            expression += value;
+          }
+        }
+
+        update();
+      }
+
+      function act(action) {
+        if (action === "clear") {
+          expression = "";
+          finished = false;
+        } else if (action === "delete") {
+          expression = expression.slice(0, -1);
+          finished = false;
+        } else if (action === "sign") {
+          if (!expression) {
+            expression = "-";
+          } else if (/[+\-*/]$/.test(expression)) {
+            expression += "-";
+          } else {
+            const match = expression.match(/(\d+\.?\d*|\.\d+)$/);
+            if (match) {
+              const start = match.index;
+              const before = expression.slice(0, start);
+              const number = match[0];
+
+              if (before.endsWith("-") &&
+                  (before.length === 1 ||
+                   /[+\-*/]$/.test(before))) {
+                expression = before.slice(0, -1) + number;
+              } else {
+                expression = before + "(-" + number + ")";
+              }
+            }
+          }
+        } else if (action === "percent") {
+          if (/\d$/.test(expression)) expression += "%";
+        } else if (action === "equals") {
+          try {
+            const answer = calculate(expression);
+            expression = String(answer);
+            finished = true;
+          } catch {
+            resultEl.textContent = "計算できません";
+            return;
+          }
+        }
+
+        update();
+      }
+
+      document.querySelector(".keys").addEventListener("click", e => {
+        const button = e.target.closest("button");
+        if (!button) return;
+
+        if (button.dataset.value !== undefined) {
+          inputValue(button.dataset.value);
+        } else if (button.dataset.action) {
+          act(button.dataset.action);
+        }
+      });
+
+      document.addEventListener("keydown", e => {
+        if (/^[0-9.]$/.test(e.key)) inputValue(e.key);
+        else if (["+", "-", "*", "/"].includes(e.key)) {
+          inputValue(e.key);
+        } else if (e.key === "Enter" || e.key === "=") {
+          e.preventDefault();
+          act("equals");
+        } else if (e.key === "Backspace") {
+          act("delete");
+        } else if (e.key === "Escape") {
+          act("clear");
+        } else if (e.key === "%") {
+          act("percent");
+        }
+      });
+
+      update();
+    })();
+  </script>
+</body>
+</html>
