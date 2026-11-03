@@ -28,21 +28,29 @@
             margin-bottom: 30px;
         }
         .input-area {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 40px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.05);
             background: var(--card-bg);
-            padding: 15px;
+            padding: 20px;
             border-radius: 8px;
+            margin-bottom: 40px;
         }
-        input[type="url"] {
-            flex: 1;
+        .form-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .form-group-sub {
+            display: flex;
+            gap: 10px;
+        }
+        input[type="text"], input[type="url"] {
             padding: 12px;
             border: 1px solid #ddd;
             border-radius: 6px;
             font-size: 1rem;
         }
+        #url-input { flex: 2; }
+        #title-input { flex: 1; }
         button {
             padding: 12px 24px;
             background-color: var(--accent-color);
@@ -54,9 +62,7 @@
             font-weight: bold;
             transition: opacity 0.2s;
         }
-        button:hover {
-            opacity: 0.9;
-        }
+        button:hover { opacity: 0.9; }
         .bookmark-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -72,6 +78,7 @@
             flex-direction: column;
             text-decoration: none;
             color: inherit;
+            position: relative;
         }
         .card:hover {
             transform: translateY(-5px);
@@ -94,25 +101,33 @@
             font-weight: bold;
             margin: 0 0 8px 0;
             line-height: 1.4;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
         }
-        .card-description {
-            font-size: 0.85rem;
-            color: #666;
-            margin: 0;
-            line-height: 1.5;
-            display: -webkit-box;
-            -webkit-line-clamp: 3;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
+        .card-url {
+            font-size: 0.8rem;
+            color: #888;
+            word-break: break-all;
         }
-        /* 履歴クリアボタンのスタイル */
+        .delete-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+        .delete-btn:hover { background: rgba(220, 53, 69, 0.9); }
         .clear-btn {
             display: block;
-            margin: 20px auto;
+            margin: 40px auto 20px auto;
             padding: 8px 16px;
             background-color: #dc3545;
             color: white;
@@ -129,13 +144,15 @@
     <h1>My Visual Bookmarks</h1>
     
     <div class="input-area">
-        <input type="url" id="url-input" placeholder="https://example.com" required>
-        <button id="add-btn">追加</button>
+        <div class="form-group">
+            <input type="url" id="url-input" placeholder="https://example.com (URLを入力)" required>
+            <input type="text" id="title-input" placeholder="サイト名（任意入力）">
+            <button id="add-btn">追加</button>
+        </div>
+        <small style="color: #666;">※サイト名は空欄でも、URLから自動で生成されます。</small>
     </div>
 
     <div class="bookmark-grid" id="bookmark-grid"></div>
-
-    <!-- 壊れたデータを消去するためのクリアボタン -->
     <button class="clear-btn" id="clear-all-btn">全てのブックマークをクリア</button>
 </div>
 
@@ -144,67 +161,67 @@
     document.getElementById('add-btn').addEventListener('click', addBookmark);
     document.getElementById('clear-all-btn').addEventListener('click', clearAllBookmarks);
 
-    // 安全なダミー画像（インラインSVGデータ。外部通信をしないので100%確実に表示されます）
     const dummyImage = "data:image/svg+xml;utf8,<svg xmlns='http://w3.org' width='300' height='160' viewBox='0 0 300 160'><rect width='100%' height='100%' fill='%23eee'/><text x='50%' y='50%' font-size='16' font-family='sans-serif' fill='%23aaa' dominant-baseline='middle' text-anchor='middle'>No Image</text></svg>";
 
-    async function addBookmark() {
+    function addBookmark() {
         const urlInput = document.getElementById('url-input');
-        const url = urlInput.value.trim();
+        const titleInput = document.getElementById('title-input');
+        
+        let url = urlInput.value.trim();
+        let title = titleInput.value.trim();
 
-        if (!url) return;
+        if (!url) return alert('URLを入力してください');
 
-        let titleTmp = url;
-        try {
-            const parsedUrl = new URL(url);
-            titleTmp = parsedUrl.hostname + parsedUrl.pathname;
-        } catch(e) {
-            titleTmp = url;
+        // URLの簡易整形（httpがない場合は自動付与）
+        if (!/^https?:\/\//i.test(url)) {
+            url = 'https://' + url;
         }
 
-        let bookmark = {
-            url: url,
-            title: titleTmp,
-            image: dummyImage, // 初期値は確実に表示されるSVG
-            description: '相手サイトのセキュリティ制限により、詳細情報を自動取得できませんでした。'
-        };
-
-        try {
-            const apiUrl = `https://dub.co{encodeURIComponent(url)}`;
-            const response = await fetch(apiUrl);
-            
-            if (response.ok) {
-                const data = await response.json();
-                if (data.title) bookmark.title = data.title;
-                if (data.image) bookmark.image = data.image;
-                if (data.description) bookmark.description = data.description;
+        // タイトルが未入力ならURLからドメイン名を抽出して使用
+        if (!title) {
+            try {
+                const parsedUrl = new URL(url);
+                title = parsedUrl.hostname;
+            } catch(e) {
+                title = url;
             }
-        } catch (error) {
-            console.log('APIブロックのため仮データで生成します');
         }
+
+        // 【確実な方法】WordPressの無料スクリーンショットAPIを使用（横幅300pxで撮影）
+        const screenshotUrl = `https://wordpress.com{encodeURIComponent(url)}?w=300`;
+
+        const id = Date.now().toString(); // 個別削除用のID
+        const bookmark = { id, url, title, image: screenshotUrl };
 
         saveBookmark(bookmark);
         renderCard(bookmark);
         
+        // 入力欄をクリア
         urlInput.value = ''; 
+        titleInput.value = ''; 
     }
 
     function renderCard(bookmark) {
         const grid = document.getElementById('bookmark-grid');
-        const card = document.createElement('a');
-        card.href = bookmark.url;
-        card.target = '_blank';
-        card.className = 'card';
         
-        // OGP画像。読み込み失敗時は無限ループを防ぐため、onerrorイベントを1回だけ実行して消去する仕組みに修正
-        card.innerHTML = `
-            <img src="${bookmark.image}" class="card-thumbnail" alt="thumbnail" onerror="this.onerror=null; this.src='${dummyImage}';">
-            <div class="card-body">
-                <h3 class="card-title">${bookmark.title}</h3>
-                <p class="card-description">${bookmark.description}</p>
-            </div>
+        // カード全体の器（divに変更し、中にリンクと削除ボタンを配置）
+        const cardWrapper = document.createElement('div');
+        cardWrapper.className = 'card-wrapper';
+        cardWrapper.id = `card-${bookmark.id}`;
+        cardWrapper.style.position = 'relative';
+        
+        cardWrapper.innerHTML = `
+            <button class="delete-btn" onclick="deleteBookmark('${bookmark.id}', event)">×</button>
+            <a href="${bookmark.url}" target="_blank" class="card">
+                <img src="${bookmark.image}" class="card-thumbnail" alt="thumbnail" onerror="this.onerror=null; this.src='${dummyImage}';">
+                <div class="card-body">
+                    <h3 class="card-title">${bookmark.title}</h3>
+                    <p class="card-url">${bookmark.url}</p>
+                </div>
+            </a>
         `;
         
-        grid.prepend(card);
+        grid.prepend(cardWrapper);
     }
 
     function saveBookmark(bookmark) {
@@ -218,7 +235,19 @@
         bookmarks.forEach(renderCard);
     }
 
-    // ブラウザに溜まった不具合データを一度きれいにリセットする関数
+    // 個別に1件ずつ削除する機能
+    window.deleteBookmark = function(id, event) {
+        event.preventDefault(); // リンクへの遷移を防ぐ
+        if (confirm('このブックマークを削除しますか？')) {
+            let bookmarks = JSON.parse(localStorage.getItem('my_bookmarks')) || [];
+            bookmarks = bookmarks.filter(b => b.id !== id);
+            localStorage.setItem('my_bookmarks', JSON.stringify(bookmarks));
+            
+            const element = document.getElementById(`card-${id}`);
+            if (element) element.remove();
+        }
+    }
+
     function clearAllBookmarks() {
         if(confirm('登録したすべてのブックマークを削除します。よろしいですか？')) {
             localStorage.removeItem('my_bookmarks');
