@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Gmailの件名をコピーしてLINEに貼り付ける方法</title>
+<style>
+:root{--ink:#202124;--muted:#5f6368;--blue:#1a73e8;--blue2:#e8f0fe;--green:#188038;--green2:#e6f4ea;--line:#dadce0;--bg:#f6f8fc;--yellow:#fef7e0}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Noto Sans JP","Yu Gothic",Meiryo,sans-serif;line-height:1.75}
+main{max-width:780px;margin:0 auto;padding:20px 16px 48px}
+header{background:#fff;border:1px solid var(--line);border-radius:22px;padding:26px 22px;margin:8px 0 18px}
+.eyebrow{font-size:13px;font-weight:700;color:var(--blue);letter-spacing:.05em}
+h1{font-size:clamp(25px,6vw,36px);line-height:1.35;margin:8px 0 12px}
+.lead{font-size:17px;margin:0;color:var(--muted)}
+.pill{display:inline-block;background:var(--blue2);color:#174ea6;border-radius:99px;padding:3px 11px;font-size:13px;font-weight:700;margin:12px 5px 0 0}
+.step{background:#fff;border:1px solid var(--line);border-radius:20px;padding:20px;margin:16px 0}
+.stephead{display:flex;gap:13px;align-items:center;margin-bottom:10px}
+.num{width:40px;height:40px;flex:0 0 40px;border-radius:50%;background:var(--blue);color:white;display:grid;place-items:center;font-size:21px;font-weight:800}
+h2{font-size:21px;line-height:1.4;margin:0}
+p{margin:8px 0}
+strong{font-weight:800}
+.screen{max-width:360px;margin:16px auto 4px;border:8px solid #30343b;border-radius:28px;background:#fff;overflow:hidden;box-shadow:0 5px 16px #00000012}
+.status{height:24px;background:#f8fafd;padding:1px 14px;font-size:11px;color:#444;display:flex;justify-content:space-between}
+.appbar{height:48px;background:#f8fafd;display:flex;align-items:center;gap:15px;padding:0 16px;color:#4b5563;font-size:14px}
+.subject{padding:17px 16px 10px;font-size:19px;font-weight:700;line-height:1.4;position:relative}
+.subject small{display:block;font-size:11px;color:var(--muted);font-weight:400;margin-top:6px}
+.selection{margin:0 16px 12px;padding:7px 9px;border:2px solid var(--blue);border-radius:7px;background:#e8f0fe;color:#174ea6;font-size:15px;display:inline-block}
+.selection:after{content:"";display:block;width:8px;height:8px;background:var(--blue);border-radius:50%;margin:3px auto -11px}
+.mailbody{padding:8px 16px 20px;border-top:1px solid #eee;color:#5f6368;font-size:13px}
+.toolbar{background:#f8fafd;border-top:1px solid #eee;padding:10px 14px;display:flex;gap:14px;font-size:12px;color:#444}
+.menu{margin:0 10px 12px;padding:9px 12px;background:#30343b;color:white;border-radius:9px;display:flex;justify-content:space-around;font-size:12px;box-shadow:0 3px 8px #0003}
+.linehead{background:#06c755;color:white;padding:12px 16px;font-weight:700}
+.chat{background:#8cbaa0;padding:15px 12px;min-height:180px}
+.bubble{background:#fff;border-radius:14px 14px 14px 3px;padding:11px 13px;max-width:85%;font-size:14px;box-shadow:0 1px 2px #0001}
+.inputrow{display:flex;gap:7px;align-items:center;padding:10px;background:#fff;font-size:12px;color:#777}
+.inputbox{border:2px solid var(--blue);border-radius:20px;padding:8px 10px;flex:1;color:#333;background:#fff}
+.keyboard{background:#e8eaf0;padding:8px 5px 12px}
+.suggest{background:#f8f9fb;border-radius:7px;padding:5px 9px;text-align:left;color:#174ea6;font-size:12px;margin-bottom:7px}
+.keys{display:grid;grid-template-columns:repeat(10,1fr);gap:4px}
+.keys span{background:#fff;border-radius:5px;text-align:center;padding:7px 0;font-size:10px;box-shadow:0 1px 1px #aaa}
+.callout{border-radius:13px;padding:12px 14px;margin:14px 0;background:var(--blue2);color:#174ea6;font-size:14px}
+.warning{background:var(--yellow);color:#6b4f00}
+.success{background:var(--green2);color:#137333}
+.arrow{text-align:center;color:var(--blue);font-size:25px;font-weight:900;line-height:1.2}
+.caption{text-align:center;color:var(--muted);font-size:12px;margin:7px 0 0}
+.checklist{list-style:none;padding:0;margin:10px 0}
+.checklist li{padding:6px 0 6px 30px;position:relative}
+.checklist li:before{content:"✓";position:absolute;left:2px;top:6px;color:var(--green);font-weight:900}
+footer{text-align:center;color:var(--muted);font-size:12px;padding:20px 8px}
+@media print{body{background:#fff}main{padding:0;max-width:none}.step,header{break-inside:avoid;box-shadow:none}.screen{box-shadow:none} .step{margin:10px 0}}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <div class="eyebrow">スマートフォン操作ガイド</div>
+  <h1>Gmailの「件名」をコピーして、LINEで送る方法</h1>
+  <p class="lead">Google Pixel 10a ／ Gmailアプリ ／ Gboard（キーボード）</p>
+  <span class="pill">ゆっくりで大丈夫です</span><span class="pill">全4ステップ</span>
+</header>
+
+<section class="step">
+ <div class="stephead"><div class="num">1</div><h2>Gmailで、コピーしたいメールを開く</h2></div>
+ <p>① ホーム画面などにある、赤・青・黄・緑の「M」のマーク <strong>Gmail</strong> を押します。</p>
+ <p>② メールの一覧から、コピーしたいメールを<strong>1回押して開きます</strong>。</p>
+ <div class="screen">
+  <div class="status"><span>12:30</span><span>● ● ▰</span></div>
+  <div class="appbar">☰　 <strong>Gmail</strong> <span style="margin-left:auto">⌕　⋮</span></div>
+  <div style="padding:10px 15px;background:#f1f3f4;border-radius:20px;margin:5px 13px;color:#777;font-size:12px">メールを検索</div>
+  <div style="padding:13px 16px;border-bottom:1px solid #eee"><b>お知らせ</b><br><span style="font-size:13px">ご案内をお送りします</span></div>
+  <div style="padding:13px 16px;border-bottom:1px solid #eee;background:#f8fafd"><b>〇〇事務局</b><br><span style="font-size:13px">【重要】お手続きについて</span></div>
+  <div style="padding:13px 16px"><b>山田さん</b><br><span style="font-size:13px">先日はありがとうございました</span></div>
+ </div>
+ <p class="caption">画面のイメージです。実際のメール一覧とは異なります。</p>
+</section>
+
+<section class="step">
+ <div class="stephead"><div class="num">2</div><h2>メールの「件名」を長押しする</h2></div>
+ <p>メールを開くと、画面の上の方に<strong>太い文字で件名</strong>が表示されます。</p>
+ <p>その件名の文字の上に指を置き、<strong>そのまま1〜2秒ほど押し続けます</strong>。すぐに指を離さず、文字が選ばれるまで待ちます。</p>
+ <div class="screen">
+  <div class="status"><span>12:30</span><span>● ● ▰</span></div>
+  <div class="appbar">←　 <span style="margin-left:auto">☆　▱　⋮</span></div>
+  <div class="subject">【重要】お手続きについて<small>受信トレイ　　12:20</small></div>
+  <div class="selection">【重要】お手続きについて</div>
+  <div class="mailbody">〇〇様<br><br>いつもありがとうございます。<br>こちらのメールをご確認ください。</div>
+  <div class="toolbar">↩ 返信　　⋮ その他</div>
+ </div>
+ <p class="caption">青く選択された状態のイメージです。</p>
+ <div class="callout"><strong>ポイント：</strong>「件名」の文字の上を押します。メール本文や差出人の名前ではありません。</div>
+</section>
+
+<section class="step">
+ <div class="stephead"><div class="num">3</div><h2>表示された「コピー」を押す</h2></div>
+ <p>文字が選ばれると、近くに小さなメニューが表示されます。</p>
+ <p>メニューの中から <strong>「コピー」</strong> を1回押します。</p>
+ <div class="screen">
+  <div class="status"><span>12:30</span><span>● ● ▰</span></div>
+  <div class="appbar">←　 <span style="margin-left:auto">☆　▱　⋮</span></div>
+  <div class="subject">【重要】お手続きについて</div>
+  <div class="selection">【重要】お手続きについて</div>
+  <div class="menu"><span>コピー</span><span>共有</span><span>︙</span></div>
+  <div class="mailbody">〇〇様<br><br>いつもありがとうございます。</div>
+ </div>
+ <div class="callout success"><strong>これでコピーできました！</strong><br>コピーした文字は、一時的にスマホが覚えています。次はLINEを開きます。</div>
+ <div class="callout warning"><strong>「コピー」が見つからないとき</strong><br>メニューの右端にある「︙」や「その他」を押すと、「コピー」が出てくる場合があります。</div>
+</section>
+
+<section class="step">
+ <div class="stephead"><div class="num">4</div><h2>LINEを開いて、メッセージ欄に貼り付ける</h2></div>
+ <p>① Gmailを閉じるか、ホーム画面に戻って<strong>LINE</strong>を開きます。</p>
+ <p>② 送りたい相手とのトーク画面を開き、画面下の<strong>メッセージ入力欄</strong>を1回押します。</p>
+ <p>③ 入力欄の中を<strong>長押し</strong>します。メニューが出たら <strong>「貼り付け」</strong> を押します。</p>
+ <div class="screen">
+  <div class="status"><span>12:30</span><span>● ● ▰</span></div>
+  <div class="linehead">←　トーク</div>
+  <div class="chat"><div class="bubble">こんにちは！</div></div>
+  <div class="inputrow"><span>＋</span><div class="inputbox">【重要】お手続きについて</div><span>➤</span></div>
+  <div class="keyboard">
+   <div class="suggest">貼り付け　　コピーした文字が入ります</div>
+   <div class="keys">
+    <span>あ</span><span>か</span><span>さ</span><span>た</span><span>な</span><span>は</span><span>ま</span><span>や</span><span>ら</span><span>わ</span>
+    <span>ABC</span><span>い</span><span>き</span><span>し</span><span>ち</span><span>に</span><span>ひ</span><span>み</span><span>り</span><span>、</span>
+   </div>
+  </div>
+ </div>
+ <p class="caption">LINEの入力欄に件名が入った状態のイメージです。</p>
+ <div class="callout">「貼り付け」が出ない場合は、入力欄の中をもう一度ゆっくり長押ししてください。Gboardの上部にコピーした文字の候補が出た場合は、その候補を押しても貼り付けられます。</div>
+ <p>④ 入力欄に件名が入ったことを確認します。最後に、右側の<strong>送信ボタン</strong>（紙飛行機のマーク）を押すと相手に送れます。</p>
+</section>
+
+<section class="step">
+ <div class="stephead"><div class="num">✓</div><h2>送る前の確認</h2></div>
+ <ul class="checklist">
+  <li>LINEの入力欄に、メールの件名が入っていますか？</li>
+  <li>送りたい相手のトーク画面になっていますか？</li>
+  <li>内容が合っていることを確認してから送信しましたか？</li>
+ </ul>
+ <div class="callout success"><strong>おつかれさまでした！</strong><br>これで操作は完了です。</div>
+</section>
+
+<footer>※画面は説明用のイメージです。アプリの更新状況によって、ボタンや表示位置が少し異なる場合があります。</footer>
+</main>
+</body>
+</html>
