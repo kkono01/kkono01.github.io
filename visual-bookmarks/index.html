@@ -141,30 +141,45 @@
 
         if (!url) return alert('URLを入力してください');
 
+        // デフォルトの初期値（エラー時用）
+        let bookmark = {
+            url: url,
+            title: cleanUrlToTitle(url), // URLからドメインなどを抽出して仮のタイトルにする
+            image: 'https://placeholder.com',
+            description: '※サイトのセキュリティ制限により詳細情報を取得できませんでした。'
+        };
+
         try {
-            // 無料のOGP取得API（オープンAPI）を利用
+            // 無料のOGP取得API
             const apiUrl = `https://dub.co{encodeURIComponent(url)}`;
             
             const response = await fetch(apiUrl);
-            if (!response.ok) throw new Error('データの取得に失敗しました');
-            
-            const data = await response.json();
-
-            // 取得したOGPデータ、またはフォールバック（デフォルト値）
-            const bookmark = {
-                url: url,
-                title: data.title || url,
-                image: data.image || 'https://placeholder.com',
-                description: data.description || '説明文はありません。'
-            };
-
-            saveBookmark(bookmark);
-            renderCard(bookmark);
-            
-            urlInput.value = ''; // 入力欄をクリア
+            if (response.ok) {
+                const data = await response.json();
+                // 正常に取得できたらデータを上書き
+                if (data.title) bookmark.title = data.title;
+                if (data.image) bookmark.image = data.image;
+                if (data.description) bookmark.description = data.description;
+            }
         } catch (error) {
-            console.error(error);
-            alert('Webサイトの情報を取得できませんでした。URLが正しいか確認してください。');
+            // エラーになっても処理を止めず、初期値のままカードを作成する
+            console.warn('API制限のため仮タイトルで作成します:', error);
+        }
+
+        // 保存と描画
+        saveBookmark(bookmark);
+        renderCard(bookmark);
+        
+        urlInput.value = ''; // 入力欄をクリア
+    }
+
+    // URLからドメイン名を抽出して、最低限のタイトルを作る便利関数
+    function cleanUrlToTitle(urlStr) {
+        try {
+            const url = new URL(urlStr);
+            return url.hostname + url.pathname;
+        } catch(e) {
+            return urlStr;
         }
     }
 
