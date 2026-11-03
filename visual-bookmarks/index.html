@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ビジュアル・ブックマーク</title>
+    <style>
+        :root {
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --accent-color: #0076ff;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            font-size: 1.8rem;
+            margin-bottom: 30px;
+        }
+        /* 入力フォームのスタイル */
+        .input-area {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 40px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            background: var(--card-bg);
+            padding: 15px;
+            border-radius: 8px;
+        }
+        input[type="url"] {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+        button {
+            padding: 12px 24px;
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+            font-weight: bold;
+            transition: opacity 0.2s;
+        }
+        button:hover {
+            opacity: 0.9;
+        }
+        /* グリッドレイアウト */
+        .bookmark-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+        }
+        /* カードのスタイル */
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            flex-direction: column;
+            text-decoration: none;
+            color: inherit;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.12);
+        }
+        .card-thumbnail {
+            width: 100%;
+            height: 160px;
+            object-fit: cover;
+            background-color: #e9ecef;
+        }
+        .card-body {
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+        .card-title {
+            font-size: 1rem;
+            font-weight: bold;
+            margin: 0 0 8px 0;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .card-description {
+            font-size: 0.85rem;
+            color: #666;
+            margin: 0;
+            line-height: 1.5;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>My Visual Bookmarks</h1>
+    
+    <!-- URL追加フォーム -->
+    <div class="input-area">
+        <input type="url" id="url-input" placeholder="https://example.com" required>
+        <button id="add-btn">追加</button>
+    </div>
+
+    <!-- リンク集の一覧が表示される場所 -->
+    <div class="bookmark-grid" id="bookmark-grid"></div>
+</div>
+
+<script>
+    // ページ読み込み時に保存されたリストを表示
+    document.addEventListener('DOMContentLoaded', loadBookmarks);
+    document.getElementById('add-btn').addEventListener('click', addBookmark);
+
+    // OGPを取得してブックマークを追加する関数
+    async function addBookmark() {
+        const urlInput = document.getElementById('url-input');
+        const url = urlInput.value.trim();
+
+        if (!url) return alert('URLを入力してください');
+
+        try {
+            // 無料のOGP取得API（オープンAPI）を利用
+            const apiUrl = `https://dub.co{encodeURIComponent(url)}`;
+            
+            const response = await fetch(apiUrl);
+            if (!response.ok) throw new Error('データの取得に失敗しました');
+            
+            const data = await response.json();
+
+            // 取得したOGPデータ、またはフォールバック（デフォルト値）
+            const bookmark = {
+                url: url,
+                title: data.title || url,
+                image: data.image || 'https://placeholder.com',
+                description: data.description || '説明文はありません。'
+            };
+
+            saveBookmark(bookmark);
+            renderCard(bookmark);
+            
+            urlInput.value = ''; // 入力欄をクリア
+        } catch (error) {
+            console.error(error);
+            alert('Webサイトの情報を取得できませんでした。URLが正しいか確認してください。');
+        }
+    }
+
+    // カードを画面に描画する関数
+    function renderCard(bookmark) {
+        const grid = document.getElementById('bookmark-grid');
+        
+        const card = document.createElement('a');
+        card.href = bookmark.url;
+        card.target = '_blank';
+        card.className = 'card';
+        
+        card.innerHTML = `
+            <img src="${bookmark.image}" class="card-thumbnail" alt="thumbnail" onerror="this.src='https://placeholder.com'">
+            <div class="card-body">
+                <h3 class="card-title">${bookmark.title}</h3>
+                <p class="card-description">${bookmark.description}</p>
+            </div>
+        `;
+        
+        grid.prepend(card); // 新しいものを先頭に追加
+    }
+
+    // ブラウザ（LocalStorage）に保存する関数
+    function saveBookmark(bookmark) {
+        let bookmarks = JSON.parse(localStorage.getItem('my_bookmarks')) || [];
+        bookmarks.push(bookmark);
+        localStorage.setItem('my_bookmarks', JSON.stringify(bookmarks));
+    }
+
+    // 読み込み時にLocalStorageからデータを復元する関数
+    function loadBookmarks() {
+        let bookmarks = JSON.parse(localStorage.getItem('my_bookmarks')) || [];
+        bookmarks.forEach(renderCard);
+    }
+</script>
+
+</body>
+</html>
