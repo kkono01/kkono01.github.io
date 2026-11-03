@@ -3,16 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ビジュアル・ブックマーク</title>
+    <title>マイ・ブックマークリンク集</title>
     <style>
         :root {
-            --bg-color: #f4f7f6;
+            --bg-color: #f8f9fa;
             --card-bg: #ffffff;
-            --text-color: #333333;
-            --accent-color: #0076ff;
+            --text-color: #212529;
+            --accent-color: #0d6efd;
+            --border-color: #dee2e6;
         }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);
             margin: 0;
@@ -26,33 +27,47 @@
             text-align: center;
             font-size: 1.8rem;
             margin-bottom: 30px;
+            color: #333;
         }
+        /* 入力フォームの改善 */
         .input-area {
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
             background: var(--card-bg);
-            padding: 20px;
-            border-radius: 8px;
+            padding: 25px;
+            border-radius: 10px;
             margin-bottom: 40px;
+            border: 1px solid var(--border-color);
+        }
+        .form-row {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        @media (min-width: 768px) {
+            .form-row {
+                flex-direction: row;
+            }
         }
         .form-group {
+            flex: 1;
             display: flex;
-            gap: 10px;
-            margin-bottom: 10px;
+            flex-direction: column;
+            gap: 5px;
         }
-        .form-group-sub {
-            display: flex;
-            gap: 10px;
+        label {
+            font-size: 0.85rem;
+            font-weight: bold;
+            color: #555;
         }
         input[type="text"], input[type="url"] {
-            padding: 12px;
-            border: 1px solid #ddd;
+            padding: 10px;
+            border: 1px solid var(--border-color);
             border-radius: 6px;
-            font-size: 1rem;
+            font-size: 0.95rem;
         }
-        #url-input { flex: 2; }
-        #title-input { flex: 1; }
-        button {
-            padding: 12px 24px;
+        .btn-submit {
+            padding: 12px;
             background-color: var(--accent-color);
             color: white;
             border: none;
@@ -60,19 +75,31 @@
             font-size: 1rem;
             cursor: pointer;
             font-weight: bold;
-            transition: opacity 0.2s;
+            align-self: flex-end;
+            width: 100%;
         }
-        button:hover { opacity: 0.9; }
+        @media (min-width: 768px) {
+            .btn-submit {
+                width: 120px;
+                height: 42px;
+                margin-top: 24px;
+            }
+        }
+        .btn-submit:hover { opacity: 0.9; }
+        
+        /* リンク集グリッド */
         .bookmark-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             gap: 25px;
         }
+        /* カードデザイン */
         .card {
             background: var(--card-bg);
             border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            border: 1px solid var(--border-color);
             transition: transform 0.2s, box-shadow 0.2s;
             display: flex;
             flex-direction: column;
@@ -81,14 +108,15 @@
             position: relative;
         }
         .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 16px rgba(0,0,0,0.12);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
         }
         .card-thumbnail {
             width: 100%;
-            height: 160px;
+            height: 150px;
             object-fit: cover;
             background-color: #e9ecef;
+            border-bottom: 1px solid var(--border-color);
         }
         .card-body {
             padding: 15px;
@@ -97,42 +125,45 @@
             flex-grow: 1;
         }
         .card-title {
-            font-size: 1rem;
+            font-size: 0.95rem;
             font-weight: bold;
-            margin: 0 0 8px 0;
+            margin: 0 0 10px 0;
             line-height: 1.4;
+            color: #111;
         }
         .card-url {
             font-size: 0.8rem;
-            color: #888;
+            color: #6c757d;
             word-break: break-all;
+            margin-top: auto;
         }
         .delete-btn {
             position: absolute;
             top: 8px;
             right: 8px;
-            background: rgba(0, 0, 0, 0.6);
+            background: rgba(0, 0, 0, 0.5);
             color: white;
             border: none;
             border-radius: 50%;
-            width: 28px;
-            height: 28px;
+            width: 26px;
+            height: 26px;
             font-size: 14px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
             z-index: 10;
+            transition: background 0.2s;
         }
         .delete-btn:hover { background: rgba(220, 53, 69, 0.9); }
         .clear-btn {
             display: block;
-            margin: 40px auto 20px auto;
-            padding: 8px 16px;
+            margin: 50px auto 20px auto;
+            padding: 10px 20px;
             background-color: #dc3545;
             color: white;
             border: none;
-            border-radius: 4px;
+            border-radius: 6px;
             cursor: pointer;
             font-size: 0.9rem;
         }
@@ -143,17 +174,31 @@
 <div class="container">
     <h1>My Visual Bookmarks</h1>
     
+    <!-- 入力フォームエリア -->
     <div class="input-area">
-        <div class="form-group">
-            <input type="url" id="url-input" placeholder="https://example.com (URLを入力)" required>
-            <input type="text" id="title-input" placeholder="サイト名（任意入力）">
-            <button id="add-btn">追加</button>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="url-input">① サイトのURL（必須）</label>
+                <input type="url" id="url-input" placeholder="https://example.com" required>
+            </div>
+            <div class="form-group">
+                <label for="title-input">② サイト名（必須）</label>
+                <input type="text" id="title-input" placeholder="例：セブンイレブン プライチ">
+            </div>
+            <div class="form-group">
+                <label for="image-input">③ プレビュー画像のURL（任意）</label>
+                <input type="url" id="image-input" placeholder="https://.../image.jpg（空欄でもOK）">
+            </div>
+            <button id="add-btn" class="btn-submit">追加</button>
         </div>
-        <small style="color: #666;">※サイト名は空欄でも、URLから自動で生成されます。</small>
+        <small style="color: #666; display: block; line-height: 1.4;">
+            ※画像URLの欄には、ネット上の画像を右クリックして「画像リンクをコピー」したURLを貼り付けるか、空欄（ロゴマーク等の初期画像になります）のまま追加してください。
+        </small>
     </div>
 
+    <!-- リンク集の一覧 -->
     <div class="bookmark-grid" id="bookmark-grid"></div>
-    <button class="clear-btn" id="clear-all-btn">全てのブックマークをクリア</button>
+    <button class="clear-btn" id="clear-all-btn">すべてのブックマークをリセット</button>
 </div>
 
 <script>
@@ -161,59 +206,54 @@
     document.getElementById('add-btn').addEventListener('click', addBookmark);
     document.getElementById('clear-all-btn').addEventListener('click', clearAllBookmarks);
 
-    const dummyImage = "data:image/svg+xml;utf8,<svg xmlns='http://w3.org' width='300' height='160' viewBox='0 0 300 160'><rect width='100%' height='100%' fill='%23eee'/><text x='50%' y='50%' font-size='16' font-family='sans-serif' fill='%23aaa' dominant-baseline='middle' text-anchor='middle'>No Image</text></svg>";
+    // 外部APIを介さない、確実に表示される標準のプレースホルダー画像（SVG）
+    const defaultSvgImage = "data:image/svg+xml;utf8,<svg xmlns='http://w3.org' width='300' height='150' viewBox='0 0 300 150'><rect width='100%' height='100%' fill='%23e9ecef'/><text x='50%' y='50%' font-size='24' font-family='sans-serif' fill='%236c757d' font-weight='bold' dominant-baseline='middle' text-anchor='middle'>LINK</text></svg>";
 
     function addBookmark() {
         const urlInput = document.getElementById('url-input');
         const titleInput = document.getElementById('title-input');
+        const imageInput = document.getElementById('image-input');
         
         let url = urlInput.value.trim();
         let title = titleInput.value.trim();
+        let image = imageInput.value.trim();
 
-        if (!url) return alert('URLを入力してください');
+        if (!url || !title) {
+            return alert('「URL」と「サイト名」は必ず入力してください。');
+        }
 
-        // URLの簡易整形（httpがない場合は自動付与）
+        // URLにプロトコルがない場合補完
         if (!/^https?:\/\//i.test(url)) {
             url = 'https://' + url;
         }
 
-        // タイトルが未入力ならURLからドメイン名を抽出して使用
-        if (!title) {
-            try {
-                const parsedUrl = new URL(url);
-                title = parsedUrl.hostname;
-            } catch(e) {
-                title = url;
-            }
+        // 画像URLが空欄なら、標準のSVG画像をセット
+        if (!image) {
+            image = defaultSvgImage;
         }
 
-        // 【確実な方法】WordPressの無料スクリーンショットAPIを使用（横幅300pxで撮影）
-        const screenshotUrl = `https://wordpress.com{encodeURIComponent(url)}?w=300`;
-
-        const id = Date.now().toString(); // 個別削除用のID
-        const bookmark = { id, url, title, image: screenshotUrl };
+        const id = Date.now().toString();
+        const bookmark = { id, url, title, image };
 
         saveBookmark(bookmark);
         renderCard(bookmark);
         
-        // 入力欄をクリア
+        // 入力欄を綺麗にする
         urlInput.value = ''; 
         titleInput.value = ''; 
+        imageInput.value = ''; 
     }
 
     function renderCard(bookmark) {
         const grid = document.getElementById('bookmark-grid');
-        
-        // カード全体の器（divに変更し、中にリンクと削除ボタンを配置）
         const cardWrapper = document.createElement('div');
-        cardWrapper.className = 'card-wrapper';
         cardWrapper.id = `card-${bookmark.id}`;
         cardWrapper.style.position = 'relative';
         
         cardWrapper.innerHTML = `
             <button class="delete-btn" onclick="deleteBookmark('${bookmark.id}', event)">×</button>
             <a href="${bookmark.url}" target="_blank" class="card">
-                <img src="${bookmark.image}" class="card-thumbnail" alt="thumbnail" onerror="this.onerror=null; this.src='${dummyImage}';">
+                <img src="${bookmark.image}" class="card-thumbnail" alt="thumbnail" onerror="this.onerror=null; this.src='${defaultSvgImage}';">
                 <div class="card-body">
                     <h3 class="card-title">${bookmark.title}</h3>
                     <p class="card-url">${bookmark.url}</p>
@@ -235,9 +275,8 @@
         bookmarks.forEach(renderCard);
     }
 
-    // 個別に1件ずつ削除する機能
     window.deleteBookmark = function(id, event) {
-        event.preventDefault(); // リンクへの遷移を防ぐ
+        event.preventDefault();
         if (confirm('このブックマークを削除しますか？')) {
             let bookmarks = JSON.parse(localStorage.getItem('my_bookmarks')) || [];
             bookmarks = bookmarks.filter(b => b.id !== id);
@@ -249,7 +288,7 @@
     }
 
     function clearAllBookmarks() {
-        if(confirm('登録したすべてのブックマークを削除します。よろしいですか？')) {
+        if(confirm('すべてのブックマークを消去して初期化しますか？')) {
             localStorage.removeItem('my_bookmarks');
             document.getElementById('bookmark-grid').innerHTML = '';
         }
