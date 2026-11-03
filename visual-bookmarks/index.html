@@ -109,6 +109,18 @@
             -webkit-box-orient: vertical;
             overflow: hidden;
         }
+        /* 履歴クリアボタンのスタイル */
+        .clear-btn {
+            display: block;
+            margin: 20px auto;
+            padding: 8px 16px;
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
     </style>
 </head>
 <body>
@@ -122,22 +134,25 @@
     </div>
 
     <div class="bookmark-grid" id="bookmark-grid"></div>
+
+    <!-- 壊れたデータを消去するためのクリアボタン -->
+    <button class="clear-btn" id="clear-all-btn">全てのブックマークをクリア</button>
 </div>
 
 <script>
     document.addEventListener('DOMContentLoaded', loadBookmarks);
     document.getElementById('add-btn').addEventListener('click', addBookmark);
+    document.getElementById('clear-all-btn').addEventListener('click', clearAllBookmarks);
+
+    // 安全なダミー画像（インラインSVGデータ。外部通信をしないので100%確実に表示されます）
+    const dummyImage = "data:image/svg+xml;utf8,<svg xmlns='http://w3.org' width='300' height='160' viewBox='0 0 300 160'><rect width='100%' height='100%' fill='%23eee'/><text x='50%' y='50%' font-size='16' font-family='sans-serif' fill='%23aaa' dominant-baseline='middle' text-anchor='middle'>No Image</text></svg>";
 
     async function addBookmark() {
         const urlInput = document.getElementById('url-input');
         const url = urlInput.value.trim();
 
-        if (!url) {
-            alert('URLを入力してください');
-            return;
-        }
+        if (!url) return;
 
-        // 1. 最初からエラー時の「仮データ」を作っておく（ここがポイント）
         let titleTmp = url;
         try {
             const parsedUrl = new URL(url);
@@ -149,28 +164,24 @@
         let bookmark = {
             url: url,
             title: titleTmp,
-            image: 'https://placeholder.com',
-            description: '相手サイトのセキュリティ制限（ボット対策）により、画像と説明文を自動取得できませんでした。'
+            image: dummyImage, // 初期値は確実に表示されるSVG
+            description: '相手サイトのセキュリティ制限により、詳細情報を自動取得できませんでした。'
         };
 
-        // 2. データの取得を試みる（成否に関わらずエラーポップアップは絶対に一律禁止）
         try {
             const apiUrl = `https://dub.co{encodeURIComponent(url)}`;
             const response = await fetch(apiUrl);
             
             if (response.ok) {
                 const data = await response.json();
-                // 正常に値が入っていれば上書きする
                 if (data.title) bookmark.title = data.title;
                 if (data.image) bookmark.image = data.image;
                 if (data.description) bookmark.description = data.description;
             }
         } catch (error) {
-            // 通信エラーやブロックが発生しても、画面には何も出さず裏でスルーする
-            console.log('APIがブロックされました。仮データで生成します。');
+            console.log('APIブロックのため仮データで生成します');
         }
 
-        // 3. どんな結果であっても、必ずここでカードを追加・保存する
         saveBookmark(bookmark);
         renderCard(bookmark);
         
@@ -184,8 +195,9 @@
         card.target = '_blank';
         card.className = 'card';
         
+        // OGP画像。読み込み失敗時は無限ループを防ぐため、onerrorイベントを1回だけ実行して消去する仕組みに修正
         card.innerHTML = `
-            <img src="${bookmark.image}" class="card-thumbnail" alt="thumbnail" onerror="this.src='https://placeholder.com'">
+            <img src="${bookmark.image}" class="card-thumbnail" alt="thumbnail" onerror="this.onerror=null; this.src='${dummyImage}';">
             <div class="card-body">
                 <h3 class="card-title">${bookmark.title}</h3>
                 <p class="card-description">${bookmark.description}</p>
@@ -204,6 +216,14 @@
     function loadBookmarks() {
         let bookmarks = JSON.parse(localStorage.getItem('my_bookmarks')) || [];
         bookmarks.forEach(renderCard);
+    }
+
+    // ブラウザに溜まった不具合データを一度きれいにリセットする関数
+    function clearAllBookmarks() {
+        if(confirm('登録したすべてのブックマークを削除します。よろしいですか？')) {
+            localStorage.removeItem('my_bookmarks');
+            document.getElementById('bookmark-grid').innerHTML = '';
+        }
     }
 </script>
 
